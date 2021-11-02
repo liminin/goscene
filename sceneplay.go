@@ -18,14 +18,8 @@ type ScenePlay struct {
 	lastData     interface{}
 }
 
-func (s *ScenePlay) Get(key string) (v interface{}, ok bool) {
-	v, err := s.store.State().Get(s.ID, key)
-
-	if err == nil {
-		ok = true
-	}
-
-	return
+func (s *ScenePlay) Get(key string) *StateCmd {
+	return NewStateCmd(s.store.State().Get(s.ID, key))
 }
 
 func (s *ScenePlay) Set(key string, value interface{}) (ok bool) {

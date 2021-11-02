@@ -14,7 +14,7 @@ type Store interface {
 }
 
 type StateRepository interface {
-	Get(playID int, key string) (v interface{}, err error)
+	Get(playID int, key string) (v string, err error)
 	Set(playID int, key string, value interface{}) (err error)
 }
 

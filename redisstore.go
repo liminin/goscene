@@ -149,7 +149,7 @@ type RedisStateRepository struct {
 	redisKey func(a ...interface{}) string
 }
 
-func (r *RedisStateRepository) Get(playID int, key string) (v interface{}, err error) {
+func (r *RedisStateRepository) Get(playID int, key string) (v string, err error) {
 	v, err = r.redis.HGet(ctx, r.redisKey("play", playID, "state"), key).Result()
 
 	return
