@@ -96,6 +96,7 @@ func (r *RedisPlayRepository) End(playID int) (err error) {
 	err = r.redis.Unlink(
 		ctx,
 		r.redisKey("play", playID),
+		r.redisKey("play", playID, "state"),
 	).Err()
 
 	return
@@ -149,7 +150,7 @@ type RedisStateRepository struct {
 }
 
 func (r *RedisStateRepository) Get(playID int, key string) (v interface{}, err error) {
-	err = r.redis.HGet(ctx, r.redisKey("play", playID, "state"), key).Err()
+	v, err = r.redis.HGet(ctx, r.redisKey("play", playID, "state"), key).Result()
 
 	return
 }
