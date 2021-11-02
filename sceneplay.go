@@ -48,18 +48,20 @@ func (s *ScenePlay) Execute(data interface{}) interface{} {
 	return s.scene.handlers[s.currentIndex](s, data)
 }
 
-func (s *ScenePlay) Next() {
-	s.Go(s.currentIndex + 1)
+func (s *ScenePlay) Next() interface{} {
+	data, _ := s.Go(s.currentIndex + 1)
+	return data
 }
 
-func (s *ScenePlay) Back() {
-	s.Go(s.currentIndex - 1)
+func (s *ScenePlay) Back() interface{} {
+	data, _ := s.Go(s.currentIndex - 1)
+	return data
 }
 
-func (s *ScenePlay) Go(i int) error {
+func (s *ScenePlay) Go(i int) (interface{}, error) {
 	if i < 0 || i >= len(s.scene.handlers) {
 		s.Exit()
-		return errInvalidCurrentIndex
+		return nil, errInvalidCurrentIndex
 	}
 
 	s.currentIndex = i
@@ -67,9 +69,7 @@ func (s *ScenePlay) Go(i int) error {
 	s.FirstTime = true
 	s.store.Info().Set(s.ID, firstTimeKey, true)
 
-	s.Execute(s.lastData)
-
-	return nil
+	return s.Execute(s.lastData), nil
 }
 
 func (s *ScenePlay) Exit() {
