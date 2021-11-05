@@ -15,7 +15,7 @@ type ScenePlay struct {
 	store        Store
 	scene        Scene
 	currentIndex int
-	lastData     interface{}
+	data         interface{}
 }
 
 func (s *ScenePlay) Get(key string) *StateCmd {
@@ -32,14 +32,21 @@ func (s *ScenePlay) Set(key string, value interface{}) (ok bool) {
 	return
 }
 
+func (s *ScenePlay) SetData(data interface{}) {
+	s.data = data
+}
+
+// pass nil if you set the data with the SetData method
 func (s *ScenePlay) Execute(data interface{}) interface{} {
 	if s.FirstTime {
 		s.store.Info().Set(s.ID, firstTimeKey, false)
 	}
 
-	s.lastData = data
+	if data != nil {
+		s.data = data
+	}
 
-	return s.scene.handlers[s.currentIndex](s, data)
+	return s.scene.handlers[s.currentIndex](s, s.data)
 }
 
 func (s *ScenePlay) Next() interface{} {
@@ -63,7 +70,7 @@ func (s *ScenePlay) Go(i int) (interface{}, error) {
 	s.FirstTime = true
 	s.store.Info().Set(s.ID, firstTimeKey, true)
 
-	return s.Execute(s.lastData), nil
+	return s.Execute(s.data), nil
 }
 
 func (s *ScenePlay) Exit() {
