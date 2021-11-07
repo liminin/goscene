@@ -40,19 +40,20 @@ func (s *SceneManager) Play(key string, userID int, data interface{}) (result in
 
 func (s *SceneManager) GetUserActivePlay(userID int) (play *ScenePlay, ok bool) {
 	pi, err := s.store.Info().GetByUserID(userID)
-
-	if err == nil {
-		play = &ScenePlay{
-			ID:           pi.ID,
-			UserID:       userID,
-			store:        s.store,
-			scene:        *s.scenes[pi.SceneKey],
-			currentIndex: pi.CurrentIndex,
-			FirstTime:    pi.FirstTime,
-		}
-
-		ok = true
+	if err != nil {
+		return
 	}
+
+	play = &ScenePlay{
+		ID:           pi.ID,
+		UserID:       userID,
+		store:        s.store,
+		scene:        *s.scenes[pi.SceneKey],
+		currentIndex: pi.CurrentIndex,
+		FirstTime:    pi.FirstTime,
+		sm:           s,
+	}
+	ok = true
 
 	return
 }

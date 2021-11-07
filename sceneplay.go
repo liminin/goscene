@@ -13,6 +13,7 @@ type ScenePlay struct {
 	UserID       int
 	FirstTime    bool
 	store        Store
+	sm           *SceneManager
 	scene        Scene
 	currentIndex int
 	data         interface{}
@@ -61,8 +62,7 @@ func (s *ScenePlay) Back() interface{} {
 
 func (s *ScenePlay) Go(i int) (interface{}, error) {
 	if i < 0 || i >= len(s.scene.handlers) {
-		s.Exit()
-		return nil, errInvalidCurrentIndex
+		return s.Exit(), errInvalidCurrentIndex
 	}
 
 	s.currentIndex = i
@@ -73,6 +73,14 @@ func (s *ScenePlay) Go(i int) (interface{}, error) {
 	return s.Execute(s.data), nil
 }
 
-func (s *ScenePlay) Exit() {
+func (s *ScenePlay) Exit() interface{} {
 	s.store.Play().End(s.ID)
+
+	p, isFound := s.sm.GetUserActivePlay(s.UserID)
+	if isFound {
+		p.FirstTime = true
+		return p.Execute(s.data)
+	}
+
+	return nil
 }
