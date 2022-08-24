@@ -8,22 +8,22 @@ type ScenePlayInfo struct {
 	FirstTime    bool   `mapstructure:"first_time"`
 }
 
-type ScenePlay struct {
+type ScenePlay[T any] struct {
 	ID           int
 	UserID       int
 	FirstTime    bool
 	store        Store
-	sm           *SceneManager
-	scene        Scene
+	sm           *SceneManager[T]
+	scene        Scene[T]
 	currentIndex int
-	data         interface{}
+	data         T
 }
 
-func (s *ScenePlay) Get(key string) *StateCmd {
+func (s *ScenePlay[T]) Get(key string) *StateCmd {
 	return NewStateCmd(s.store.State().Get(s.ID, key))
 }
 
-func (s *ScenePlay) Set(key string, value interface{}) (ok bool) {
+func (s *ScenePlay[T]) Set(key string, value interface{}) (ok bool) {
 	err := s.store.State().Set(s.ID, key, value)
 
 	if err == nil {
@@ -33,36 +33,30 @@ func (s *ScenePlay) Set(key string, value interface{}) (ok bool) {
 	return
 }
 
-func (s *ScenePlay) SetData(data interface{}) {
+func (s *ScenePlay[T]) SetData(data T) {
 	s.data = data
 }
 
-// pass nil if you set the data with the SetData method
-func (s *ScenePlay) Execute(data interface{}) interface{} {
+func (s *ScenePlay[T]) Execute() error {
 	if s.FirstTime {
 		s.store.Info().Set(s.ID, firstTimeKey, false)
-	}
-
-	if data != nil {
-		s.data = data
 	}
 
 	return s.scene.handlers[s.currentIndex](s, s.data)
 }
 
-func (s *ScenePlay) Next() interface{} {
-	data, _ := s.Go(s.currentIndex + 1)
-	return data
+func (s *ScenePlay[T]) Next() error {
+	return s.Go(s.currentIndex + 1)
 }
 
-func (s *ScenePlay) Back() interface{} {
-	data, _ := s.Go(s.currentIndex - 1)
-	return data
+func (s *ScenePlay[T]) Back() error {
+	return s.Go(s.currentIndex - 1)
 }
 
-func (s *ScenePlay) Go(i int) (interface{}, error) {
+func (s *ScenePlay[T]) Go(i int) error {
 	if i < 0 || i >= len(s.scene.handlers) {
-		return s.Exit(), errInvalidCurrentIndex
+		s.Exit()
+		return errInvalidCurrentIndex
 	}
 
 	s.currentIndex = i
@@ -70,16 +64,16 @@ func (s *ScenePlay) Go(i int) (interface{}, error) {
 	s.FirstTime = true
 	s.store.Info().Set(s.ID, firstTimeKey, true)
 
-	return s.Execute(s.data), nil
+	return s.Execute()
 }
 
-func (s *ScenePlay) Exit() interface{} {
+func (s *ScenePlay[T]) Exit() error {
 	s.store.Play().End(s.ID)
 
 	p, isFound := s.sm.GetUserActivePlay(s.UserID)
 	if isFound {
 		p.FirstTime = true
-		return p.Execute(s.data)
+		return p.Execute()
 	}
 
 	return nil
