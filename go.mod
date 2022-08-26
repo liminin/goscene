@@ -3,8 +3,8 @@ module github.com/liminin/goscene
 go 1.18
 
 require (
-	github.com/go-redis/redis/v8 v8.11.5
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/go-redis/redis/v9 v9.0.0-beta.2
 )
 
 require (
