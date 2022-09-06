@@ -25,11 +25,6 @@ func (s *SceneManager[T]) Play(key string, userID int, data T) (err error) {
 		return
 	}
 
-	previousPlay, ok := s.GetUserActivePlay(userID)
-	if ok {
-		s.store.Info().Set(previousPlay.ID, firstTimeKey, true)
-	}
-
 	err = scene.Play(userID)
 
 	if err != nil {
