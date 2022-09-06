@@ -46,16 +46,27 @@ func (s *ScenePlay[T]) Execute() error {
 }
 
 func (s *ScenePlay[T]) Next() error {
+	if s.currentIndex >= len(s.scene.handlers)-1 {
+		s.Exit()
+
+		return nil
+	}
+
 	return s.Go(s.currentIndex + 1)
 }
 
 func (s *ScenePlay[T]) Back() error {
+	if s.currentIndex == 0 {
+		s.Exit()
+
+		return nil
+	}
+
 	return s.Go(s.currentIndex - 1)
 }
 
 func (s *ScenePlay[T]) Go(i int) error {
 	if i < 0 || i >= len(s.scene.handlers) {
-		s.Exit()
 		return errInvalidCurrentIndex
 	}
 
