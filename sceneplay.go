@@ -84,6 +84,7 @@ func (s *ScenePlay[T]) Exit() error {
 	p, isFound := s.sm.GetUserActivePlay(s.UserID)
 	if isFound {
 		p.FirstTime = true
+		p.SetData(s.data)
 		return p.Execute()
 	}
 
