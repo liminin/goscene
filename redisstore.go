@@ -112,7 +112,7 @@ func (r *RedisPlayInfoRepository) Set(playID int, key storeKey, value interface{
 }
 
 func (r *RedisPlayInfoRepository) GetIDByUserID(userID int) (id int64, err error) {
-	v := r.redis.LRange(ctx, r.redisKey("user", userID), 1, -1).Val()
+	v := r.redis.LRange(ctx, r.redisKey("user", userID), 0, -1).Val()
 
 	if len(v) == 0 {
 		err = errUserHasNotActivePlay
