@@ -24,7 +24,7 @@ type PlayRepository interface {
 }
 
 type PlayInfoRepository interface {
-	Set(playID int, key storeKey, value interface{})
+	Set(playID int, key storeKey, value interface{}) (err error)
 	GetByUserID(userID int) (s *ScenePlayInfo, err error)
 	GetIDByUserID(userID int) (id int64, err error)
 }

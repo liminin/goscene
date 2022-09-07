@@ -2,6 +2,7 @@ package goscene
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -107,8 +108,13 @@ type RedisPlayInfoRepository struct {
 	redisKey func(a ...interface{}) string
 }
 
-func (r *RedisPlayInfoRepository) Set(playID int, key storeKey, value interface{}) {
-	r.redis.HSet(ctx, r.redisKey("play", playID), fmt.Sprint(key), value)
+func (r *RedisPlayInfoRepository) Set(playID int, key storeKey, value interface{}) error {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+
+	return r.redis.HSet(ctx, r.redisKey("play", playID), fmt.Sprint(key), data).Err()
 }
 
 func (r *RedisPlayInfoRepository) GetIDByUserID(userID int) (id int64, err error) {

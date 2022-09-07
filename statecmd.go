@@ -1,6 +1,9 @@
 package goscene
 
-import "strconv"
+import (
+	"encoding/json"
+	"strconv"
+)
 
 type StateCmd struct {
 	err error
@@ -60,4 +63,13 @@ func (cmd *StateCmd) Bool() (bool, error) {
 		return false, cmd.err
 	}
 	return strconv.ParseBool(cmd.Val())
+}
+
+func (cmd *StateCmd) Bytes() ([]byte, error) {
+	return []byte(cmd.Val()), cmd.Err()
+}
+
+func (cmd *StateCmd) ScanJSON(v any) {
+	data, _ := cmd.Bytes()
+	json.Unmarshal(data, v)
 }
