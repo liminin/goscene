@@ -162,9 +162,17 @@ func (r *RedisStateRepository) Get(playID int, key string) (v string, err error)
 }
 
 func (r *RedisStateRepository) Set(playID int, key string, value interface{}) (err error) {
-	data, err := json.Marshal(value)
-	if err != nil {
-		return err
+	data := []byte{}
+
+	switch value.(type) {
+	case string:
+		data = []byte(fmt.Sprint(value))
+	default:
+		data, err = json.Marshal(value)
+		if err != nil {
+			return err
+		}
+
 	}
 
 	return r.redis.HSet(ctx, r.redisKey("play", playID, "state"), key, data).Err()
