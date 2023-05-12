@@ -173,9 +173,10 @@ func (r *MemoryPlayRepository) New(key string, userID int) (err error) {
 	r.nextID++
 
 	play := &ScenePlayInfo{
-		ID:       r.nextID,
-		SceneKey: key,
-		UserID:   userID,
+		ID:        r.nextID,
+		SceneKey:  key,
+		UserID:    userID,
+		FirstTime: true,
 	}
 
 	r.items[play.ID] = play
