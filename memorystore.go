@@ -22,7 +22,8 @@ func (s *MemoryStore) State() StateRepository {
 	}
 
 	s.state = &MemoryStateRepository{
-		items: map[int]state{},
+		items:          map[int]state{},
+		playRepository: s.Play().(*MemoryPlayRepository),
 	}
 
 	return s.state
