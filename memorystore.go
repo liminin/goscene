@@ -3,6 +3,7 @@ package goscene
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sort"
 	"sync"
 )
@@ -86,14 +87,26 @@ func (r *MemoryStateRepository) Set(playID int, key string, value any) (err erro
 		return errUserHasNotActivePlay
 	}
 
-	data, err := json.Marshal(value)
-	if err != nil {
-		return err
+	data := []byte{}
+
+	switch value.(type) {
+	case string:
+		data = []byte(fmt.Sprint(value))
+	default:
+		data, err = json.Marshal(value)
+		if err != nil {
+			return err
+		}
+
 	}
 
-	state := r.items[playID]
-	state[key] = string(data)
-	r.items[playID] = state
+	s, ok := r.items[playID]
+	if !ok {
+		s = state{}
+	}
+
+	s[key] = string(data)
+	r.items[playID] = s
 
 	return nil
 }
