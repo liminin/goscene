@@ -1,11 +1,16 @@
-package goscene
+package store
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"sort"
 	"sync"
+
+	"github.com/liminin/goscene/model"
+)
+
+var (
+	errUserHasNotActivePlay = errors.New("user does not have active play")
+	errPlayNotFound         = errors.New("play not found")
 )
 
 type MemoryStore struct {
@@ -24,7 +29,7 @@ func (s *MemoryStore) State() StateRepository {
 
 	s.state = &MemoryStateRepository{
 		items:          map[int]state{},
-		playRepository: s.Play().(*MemoryPlayRepository),
+		playRepository: s.Play(),
 	}
 
 	return s.state
@@ -36,68 +41,43 @@ func (s *MemoryStore) Play() PlayRepository {
 	}
 
 	s.play = &MemoryPlayRepository{
-		items: map[int]*ScenePlayInfo{},
+		items: map[int]model.Play{},
 	}
 
 	return s.play
 }
 
-func (s *MemoryStore) Info() PlayInfoRepository {
-	if s.play != nil {
-		return s.play
-	}
-
-	s.play = &MemoryPlayRepository{
-		items: map[int]*ScenePlayInfo{},
-	}
-
-	return s.play
-}
-
-type state map[string]string
+type state map[string]model.Item
 
 type MemoryStateRepository struct {
 	items map[int]state
 
-	playRepository *MemoryPlayRepository
+	playRepository PlayRepository
 
 	mx sync.RWMutex
 }
 
-func (r *MemoryStateRepository) Get(playID int, key string) (v string, err error) {
-	if !r.playRepository.IsPlayExist(playID) {
-		return "", errUserHasNotActivePlay
+func (r *MemoryStateRepository) Get(playID int, key string) (m *model.Item, err error) {
+	if !r.playRepository.PlayExist(playID) {
+		return nil, errUserHasNotActivePlay
 	}
 
 	state := r.items[playID]
 
-	v, ok := state[key]
+	item, ok := state[key]
 	if !ok {
-		return "", errors.New("not found")
+		return nil, errors.New("not found")
 	}
 
-	return
+	return &item, nil
 }
 
 func (r *MemoryStateRepository) Set(playID int, key string, value any) (err error) {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 
-	if !r.playRepository.IsPlayExist(playID) {
+	if !r.playRepository.PlayExist(playID) {
 		return errUserHasNotActivePlay
-	}
-
-	data := []byte{}
-
-	switch value.(type) {
-	case string:
-		data = []byte(fmt.Sprint(value))
-	default:
-		data, err = json.Marshal(value)
-		if err != nil {
-			return err
-		}
-
 	}
 
 	s, ok := r.items[playID]
@@ -105,26 +85,32 @@ func (r *MemoryStateRepository) Set(playID int, key string, value any) (err erro
 		s = state{}
 	}
 
-	s[key] = string(data)
+	item := model.Item{
+		Key:    key,
+		Value:  value,
+		PlayID: playID,
+	}
+
+	s[key] = item
 	r.items[playID] = s
 
 	return nil
 }
 
 type MemoryPlayRepository struct {
-	items map[int]*ScenePlayInfo
+	items map[int]model.Play
 
 	nextID int
 
 	mx sync.RWMutex
 }
 
-func (r *MemoryPlayRepository) IsPlayExist(playID int) bool {
+func (r *MemoryPlayRepository) PlayExist(playID int) bool {
 	_, ok := r.items[playID]
 	return ok
 }
 
-func (r *MemoryPlayRepository) Set(playID int, key storeKey, value interface{}) (err error) {
+func (r *MemoryPlayRepository) Set(playID int, key storeKey, value any) (err error) {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 
@@ -150,13 +136,32 @@ func (r *MemoryPlayRepository) Set(playID int, key storeKey, value interface{}) 
 	return nil
 }
 
-func (r *MemoryPlayRepository) GetByUserID(userID int) (s *ScenePlayInfo, err error) {
+// Update updates play's fields
+func (r *MemoryPlayRepository) Update(playID int, upd ...Upd) (err error) {
+	r.mx.Lock()
+	defer r.mx.Unlock()
+
+	play, ok := r.items[playID]
+	if !ok {
+		return errPlayNotFound
+	}
+
+	for _, u := range upd {
+		u(&play)
+	}
+
+	r.items[playID] = play
+
+	return nil
+}
+
+func (r *MemoryPlayRepository) GetByUserID(userID int) (s *model.Play, err error) {
 	id, err := r.GetIDByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	play := *r.items[int(id)]
+	play := r.items[int(id)]
 
 	return &play, nil
 }
@@ -186,7 +191,7 @@ func (r *MemoryPlayRepository) New(key string, userID int) (err error) {
 
 	r.nextID++
 
-	play := &ScenePlayInfo{
+	play := model.Play{
 		ID:        r.nextID,
 		SceneKey:  key,
 		UserID:    userID,
