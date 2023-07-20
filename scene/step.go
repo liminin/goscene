@@ -9,8 +9,8 @@ type Step[T any] struct {
 	h Handler[T]
 }
 
-func NewStep[T any](h Handler[T]) *Step[T] {
-	return &Step[T]{
+func NewStep[T any](h Handler[T]) Step[T] {
+	return Step[T]{
 		h: h,
 	}
 }
