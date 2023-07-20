@@ -14,10 +14,10 @@ func NewState(playID int, store store.Store) *State {
 	}
 }
 
-func (s *State) Get(key string) (*Item, error) {
+func (s *State) Get(key string) *Item {
 	m, err := s.store.State().Get(s.playID, key)
 
-	return NewItem(m, err), err
+	return NewItem(m, err)
 }
 
 func (s *State) Set(key string, value any) error {
